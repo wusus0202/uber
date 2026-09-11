@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uber Eats 結帳頁面 - 費用透明化與公益版</title>
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <style>
+        :root {
+            --ub-black: #000000;
+            --ub-green: #06C167;
+            --pie-driver: #06C167;   /* 騎士報酬 */
+            --pie-platform: #276EF1; /* 系統維護 */
+            --pie-insurance: #FFC043;/* 安全保險 */
+            --pie-donation: #E11900; /* 公益捐款 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f3f3f3;
+            color: #000;
+            padding-bottom: 70px;
+        }
+
+        /* 頂部導覽列 */
+        header {
+            background-color: #fff;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-bottom: 1px solid #e2e2e2;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            color: #000;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: -1px;
+        }
+
+        /* 主要內容區 */
+        .container {
+            max-width: 1024px;
+            margin: 24px auto;
+            display: flex;
+            gap: 24px;
+            padding: 0 16px;
+        }
+
+        .left-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .right-column {
+            width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 資訊列 */
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 12px 0;
+        }
+
+        .info-row:not(:last-child) {
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-content {
+            display: flex;
+            gap: 16px;
+        }
+
+        .info-text .title {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .info-text .subtext {
+            color: #545454;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .edit-btn {
+            background-color: #eee;
+            border: none;
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* 解方 1：外送選項與順路計算公式 */
+        .option-box {
+            border: 1px solid #e2e2e2;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-box.selected {
+            border: 2px solid #000;
+            background-color: #fcfcfc;
+        }
+
+        .option-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .option-title {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .option-subtext {
+            font-size: 13px;
+            color: #545454;
+        }
+
+        .discount-badge {
+            background-color: #e6f4ea;
+            color: #137333;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .formula-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--ub-green);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            color: #333;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 付款設定 */
+        .payment-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .payment-icon {
+            background-color: #000;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        /* 右側商家資訊 */
+        .store-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .store-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .store-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: #ddd;
+            object-fit: cover;
+        }
+
+        .btn-black {
+            width: 100%;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* 解方 2：費用公開透明圓餅圖 */
+        .pie-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 12px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .pie-chart {
+            width: 100px;
+            height: 100px;
+            transform: rotate(-90deg);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .pie-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+            font-size: 12px;
+        }
+
+        .legend-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .legend-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* 解方 3：可愛圖示說明 */
+        .icon-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .icon-item {
+            background-color: #f9f9f9;
+            padding: 8px 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-item .material-icons-outlined {
+            font-size: 18px;
+        }
+
+        .icon-title {
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .icon-desc {
+            font-size: 9px;
+            color: #666;
+        }
+
+        /* 解方 4：公益機構選項 */
+        .charity-box {
+            background-color: #fff5f5;
+            border: 1px dashed #ffcdd2;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .charity-select {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #fff;
+            outline: none;
+        }
+
+        /* 價格試算 */
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #545454;
+        }
+
+        .price-row.total {
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            margin-right: 4px;
+        }
+
+        .terms-text {
+            font-size: 11px;
+            color: #6b6b6b;
+            line-height: 1.5;
+            margin-top: 16px;
+        }
+
+        /* 底部優惠條 */
+        .bottom-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #e20910;
+            color: #fff;
+            text-align: center;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部導覽 -->
+    <header>
+        <a href="#" class="back-btn">
+            <span class="material-icons-outlined">arrow_back</span>
+            返回商店
+        </a>
+        <div class="logo">Uber <span>Eats</span></div>
+    </header>
+
+    <div class="container">
+        <!-- 左側外送與付款設定 -->
+        <div class="left-column">
+            <!-- 外送詳細資訊 -->
+            <div class="card">
+                <div class="card-title">外送詳細資訊</div>
+                
+                <div class="info-row">
+                    <div class="info-content">
+                        <span class="material-icons-outlined">shopping_bag</span>
+                        <div class="info-text">
+                            <div class="title">阿姨家</div>
+                            <div class="subtext">敬業三路188號, 190號五樓, 台北市台北市中山區</div>
+                        </div>
+                    </div>
+                    <button class="edit-btn">編輯</button>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-content">
+                        <span class="material-icons-outlined">person_outline</span>
+                        <div class="info-text">
+                            <div class="title">在我家門口碰撞</div>
+                            <div class="subtext">放在五樓鞋櫃上</div>
+                        </div>
+                    </div>
+                    <button class="edit-btn">編輯</button>
+                </div>
+            </div>
+
+            <!-- 解方 1：外送選項與順路降價公式 -->
+            <div class="card">
+                <div class="card-title">外送選項</div>
+
+                <div class="option-box selected">
+                    <div class="option-left">
+                        <span class="material-icons-outlined" style="color: var(--ub-green);">alt_route</span>
+                        <div>
+                            <div class="option-title">
+                                順路共乘省運費
+                                <span class="discount-badge">已折抵 $10</span>
+                            </div>
+                            <div class="option-subtext">9:00–9:27 AM · 允許騎士順路接單，減碳又省錢</div>
+                        </div>
+                    </div>
+                    <div style="font-weight: bold;">$0.00</div>
+                </div>
+
+                <div class="option-box">
+                    <div class="option-left">
+                        <span class="material-icons-outlined" style="color: var(--ub-green);">bolt</span>
+                        <div>
+                            <div class="option-title">優先直達</div>
+                            <div class="option-subtext">8:55–9:13 AM · 直送給您，高評分外送合作夥伴</div>
+                        </div>
+                    </div>
+                    <div style="font-weight: 500;">+$64.00</div>
+                </div>
+
+                <div class="option-box">
+                    <div class="option-left">
+                        <span class="material-icons-outlined">calendar_today</span>
+                        <div>
+                            <div class="option-title">預訂</div>
+                            <div class="option-subtext">選擇時間</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 公式動態展示 -->
+                <div class="formula-card">
+                    <span class="material-icons-outlined" style="color: var(--ub-green);">functions</span>
+                    <div><strong>順路省運費公式：</strong>原外送費 $10 - (騎士路線重疊折抵 $10) = <strong>$0 外送費</strong></div>
+                </div>
+            </div>
+
+            <!-- 付款設定 -->
+            <div class="card">
+                <div class="card-title">付款設定</div>
+
+                <div class="info-row">
+                    <div class="payment-info">
+                        <div class="payment-icon">
+                            <span class="material-icons-outlined" style="font-size:16px;">groups</span>
+                            <span class="material-icons-outlined" style="font-size:16px;">business_center</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 500;">蔣友昭的家庭</div>
+                    </div>
+                    <button class="edit-btn">編輯</button>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-text">
+                        <div class="subtext" style="color: #000; font-weight: 500;">發票資訊</div>
+                        <div class="subtext">新增稅務詳細資訊</div>
+                    </div>
+                    <button class="edit-btn">編輯</button>
+                </div>
+            </div>
+
+            <button class="btn-black" style="padding: 16px;">一鍵下訂單</button>
+        </div>
+
+        <!-- 右側訂單摘要與費用透明化卡片 -->
+        <div class="right-column">
+            <!-- 商家卡片 -->
+            <div class="card">
+                <div class="store-card">
+                    <div class="store-info">
+                        <img src="https://via.placeholder.com/48" alt="花樂發早餐" class="store-img">
+                        <div>
+                            <div class="store-name" style="font-weight: bold;">花樂發早餐</div>
+                            <div class="store-address" style="font-size: 12px; color: #545454;">114台灣台北市內湖區麗山街348巷25號</div>
+                        </div>
+                    </div>
+                    <span class="material-icons-outlined">chevron_right</span>
+                </div>
+                <button class="btn-black" style="margin-top: 16px;">一鍵下訂單</button>
+            </div>
+
+            <!-- 購物車摘要 -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                    <div style="display: flex; gap: 8px;">
+                        <span class="material-icons-outlined">shopping_cart</span>
+                        <span>購物車摘要 (1 項商品)</span>
+                    </div>
+                    <span class="material-icons-outlined">expand_more</span>
+                </div>
+            </div>
+
+            <!-- 解方 2 & 3 & 4：公開透明費用、可愛圖示、公益捐款區 -->
+            <div class="card">
+                <div class="card-title" style="font-size: 16px;">
+                    <span class="material-icons-outlined" style="color: var(--ub-green);">verified</span>
+                    費用透明公開與社會回饋
+                </div>
+
+                <!-- SVG 圓餅圖 -->
+                <div class="pie-section">
+                    <svg class="pie-chart" viewBox="0 0 32 32">
+                        <!-- 騎士報酬 70% -->
+                        <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--pie-driver)" stroke-width="32" stroke-dasharray="70 100" />
+                        <!-- 系統維護 15% -->
+                        <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--pie-platform)" stroke-width="32" stroke-dasharray="15 100" stroke-dashoffset="-70" />
+                        <!-- 安全保險 10% -->
+                        <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--pie-insurance)" stroke-width="32" stroke-dasharray="10 100" stroke-dashoffset="-85" />
+                        <!-- 公益捐贈 5% -->
+                        <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--pie-donation)" stroke-width="32" stroke-dasharray="5 100" stroke-dashoffset="-95" />
+                    </svg>
+
+                    <div class="pie-legend">
+                        <div class="legend-row">
+                            <div class="legend-label"><span class="dot" style="background: var(--pie-driver);"></span>騎士津貼</div>
+                            <strong>70% ($10.5)</strong>
+                        </div>
+                        <div class="legend-row">
+                            <div class="legend-label"><span class="dot" style="background: var(--pie-platform);"></span>平台維修</div>
+                            <strong>15% ($2.25)</strong>
+                        </div>
+                        <div class="legend-row">
+                            <div class="legend-label"><span class="dot" style="background: var(--pie-insurance);"></span>安全保險</div>
+                            <strong>10% ($1.5)</strong>
+                        </div>
+                        <div class="legend-row">
+                            <div class="legend-label"><span class="dot" style="background: var(--pie-donation);"></span>愛心捐款</div>
+                            <strong>5% ($0.75)</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 可愛圖示說明 -->
+                <div class="icon-grid">
+                    <div class="icon-item">
+                        <span class="material-icons-outlined" style="color: var(--pie-driver);">two_wheeler</span>
+                        <div>
+                            <div class="icon-title">外送員補貼</div>
+                            <div class="icon-desc">保障合理的接單收入</div>
+                        </div>
+                    </div>
+                    <div class="icon-item">
+                        <span class="material-icons-outlined" style="color: var(--pie-platform);">build</span>
+                        <div>
+                            <div class="icon-title">平台維修費</div>
+                            <div class="icon-desc">確保系統穩定運作</div>
+                        </div>
+                    </div>
+                    <div class="icon-item">
+                        <span class="material-icons-outlined" style="color: var(--pie-insurance);">health_and_safety</span>
+                        <div>
+                            <div class="icon-title">騎士醫療險</div>
+                            <div class="icon-desc">每一單皆包含平安保障</div>
+                        </div>
+                    </div>
+                    <div class="icon-item">
+                        <span class="material-icons-outlined" style="color: var(--pie-donation);">pets</span>
+                        <div>
+                            <div class="icon-title">流浪動物關懷</div>
+                            <div class="icon-desc">每單自動提撥幫助浪浪</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 公益機構選擇器 -->
+                <div class="charity-box">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-outlined" style="color: var(--pie-donation); font-size: 18px;">favorite</span>
+                        <span>捐贈對象：</span>
+                    </div>
+                    <select class="charity-select">
+                        <option>張媽媽流浪動物之家</option>
+                        <option>台灣動物緊急救援小組</option>
+                        <option>環境永續綠植計畫</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 訂單總金額計算 -->
+            <div class="card">
+                <div class="card-title" style="font-size: 18px;">訂單總計金額</div>
+
+                <div class="price-row">
+                    <span>小計</span>
+                    <span>$110.00</span>
+                </div>
+                <div class="price-row">
+                    <span>外送費 <span class="material-icons-outlined" style="font-size:12px;">info</span></span>
+                    <span><span class="original-price">$10.00</span> $0.00</span>
+                </div>
+                <div class="price-row">
+                    <span>服務費 <span class="material-icons-outlined" style="font-size:12px;">info</span></span>
+                    <span>$15.00</span>
+                </div>
+
+                <div class="price-row total">
+                    <span>總計</span>
+                    <span>$125.00</span>
+                </div>
+
+                <div class="terms-text">
+                    條款：按下按鈕送出訂單，即表示您確認已詳閱並同意隱私政策和 Uber 的「使用條款」。<br><br>
+                    每筆服務費的 5% 將自動捐贈至您所選擇的公益機構，公開透明。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部紅色優惠條 -->
+    <div class="bottom-banner">
+        <span class="material-icons-outlined">local_offer</span>
+        <span>使用優惠省下 $10</span>
+    </div>
+
+</body>
+</html>
